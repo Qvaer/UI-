@@ -1,0 +1,205 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AUTOHOME验收工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+              mono: ['JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', 'monospace'],
+            },
+            colors: {
+              bg: {
+                main: 'var(--bg-main)',
+                secondary: 'var(--bg-secondary)',
+                card: 'var(--bg-card)',
+                lighter: 'var(--bg-lighter)',
+              },
+              primary: {
+                DEFAULT: '#3D5CFF',
+                hover: '#5C75FF',
+                glow: 'rgba(61, 92, 255, 0.4)',
+              },
+              accent: {
+                purple: '#7B61FF', 
+                orange: '#FF9F2D',
+                teal: '#2DD4BF',   
+                pink: '#F472B6',
+                success: '#10B981',
+              },
+              text: {
+                main: 'var(--text-main)',
+                muted: 'var(--text-muted)',
+                dim: 'var(--text-dim)',
+              },
+              border: {
+                light: 'var(--border-light)',
+                highlight: 'rgba(255, 255, 255, 0.15)',
+              }
+            },
+            boxShadow: {
+              'glow': '0 0 20px rgba(61, 92, 255, 0.25)',
+              'card': 'var(--shadow-card)',
+              'float': '0 20px 40px -5px rgba(0,0,0,0.6)',
+              'glass': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.05)',
+            },
+            animation: {
+              'fade-in': 'fadeIn 0.5s ease-out',
+              'slide-up': 'slideUp 0.5s ease-out',
+              'blob': "blob 4s infinite",
+              'spin-slow-3d': 'spin3d 8s linear infinite',
+              'spin-reverse-3d': 'spin3dReverse 12s linear infinite',
+              'spin-slow': 'spin 3s linear infinite',
+              'spin-reverse-slow': 'spinReverse 4s linear infinite',
+              'shimmer': 'shimmer 1.5s infinite linear',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              slideUp: {
+                '0%': { transform: 'translateY(20px)', opacity: '0' },
+                '100%': { transform: 'translateY(0)', opacity: '1' },
+              },
+              blob: {
+                "0%": {
+                  transform: "translate(0px, 0px) scale(1)",
+                },
+                "33%": {
+                  transform: "translate(30px, -50px) scale(1.1)",
+                },
+                "66%": {
+                  transform: "translate(-20px, 20px) scale(0.9)",
+                },
+                "100%": {
+                  transform: "translate(0px, 0px) scale(1)",
+                },
+              },
+              spin3d: {
+                '0%': { transform: 'rotateX(0deg) rotateY(0deg) rotateZ(0deg)' },
+                '100%': { transform: 'rotateX(360deg) rotateY(360deg) rotateZ(360deg)' },
+              },
+              spin3dReverse: {
+                '0%': { transform: 'rotateX(360deg) rotateY(360deg) rotateZ(360deg)' },
+                '100%': { transform: 'rotateX(0deg) rotateY(0deg) rotateZ(0deg)' },
+              },
+              spinReverse: {
+                '0%': { transform: 'rotate(360deg)' },
+                '100%': { transform: 'rotate(0deg)' },
+              },
+              shimmer: {
+                '0%': { transform: 'translateX(-100%)' },
+                '100%': { transform: 'translateX(100%)' }
+              },
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      :root {
+        /* Light Mode Defaults */
+        --bg-main: #F2F3F5;
+        --bg-secondary: #FFFFFF;
+        --bg-card: #FFFFFF;
+        --bg-lighter: #E5E6EB;
+        --text-main: #1D2129;
+        --text-muted: #86909C;
+        --text-dim: #C9CDD4;
+        --border-light: #E5E6EB;
+        --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.05);
+      }
+
+      .dark {
+        /* Dark Mode Overrides */
+        --bg-main: #0D0D11;
+        --bg-secondary: #13131A;
+        --bg-card: #181820;
+        --bg-lighter: #22222E;
+        --text-main: #FFFFFF;
+        --text-muted: #8F90A6;
+        --text-dim: #555770;
+        --border-light: rgba(255, 255, 255, 0.08);
+        --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.4);
+      }
+
+      body {
+        background-color: var(--bg-main);
+        color: var(--text-main);
+        -webkit-font-smoothing: antialiased;
+        overflow: hidden;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+      
+      .dashboard-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-light);
+        border-radius: 1.5rem;
+        box-shadow: var(--shadow-card);
+      }
+
+      .glass-card {
+        background: rgba(24, 24, 32, 0.85); /* Keep dark glass consistent or make dynamic */
+      }
+      
+      /* Dynamic Glass for main UI */
+      .dark .glass-card {
+         background: rgba(24, 24, 32, 0.85);
+         border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      :root:not(.dark) .glass-card {
+         background: rgba(255, 255, 255, 0.85);
+         border: 1px solid rgba(0, 0, 0, 0.05);
+      }
+
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--border-light);
+      }
+
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #2C2C35; 
+        border-radius: 10px;
+      }
+      :root:not(.dark) ::-webkit-scrollbar-thumb {
+        background: #C9CDD4;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #3D3D4A; 
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.35.0",
+    "jszip": "https://esm.sh/jszip@3.10.1"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

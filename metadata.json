@@ -1,0 +1,5 @@
+{
+  "name": "AUTOHOME验收工具",
+  "description": "全流程UI验收工具。分为输入、对比、纠错、输出四个阶段，支持设计稿与开发实现的自动对齐与智能分析。",
+  "requestFramePermissions": []
+}
