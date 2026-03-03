@@ -9,15 +9,60 @@ import ReportView from './components/ReportView';
 import { ViewMode, ComparisonResult, AnalysisResult, Issue, SketchData } from './types';
 import { compareImages, checkThumbnailSimilarity } from './utils/imageProcessor';
 import { analyzeLocalDifferences } from './services/localAnalysisService';
-import { enhanceIssuesWithAI } from './services/geminiService';
+import { enhanceIssuesWithAI } from './services/doubaoService';
 import { parseSketchFile } from './utils/sketchParser';
 import { useConfig } from './contexts/ConfigContext';
 
 type Tab = 'upload' | 'analysis' | 'report';
 
 const App: React.FC = () => {
-  const { t, language, theme, toggleTheme, setLanguage } = useConfig();
+  const { t, language, theme, toggleTheme, setLanguage, volcengineApiKey, volcengineModelId, setVolcengineApiKey, setVolcengineModelId } = useConfig();
   
+  // Local state for settings inputs
+  const [localApiKey, setLocalApiKey] = useState(volcengineApiKey);
+  const [localModelId, setLocalModelId] = useState(volcengineModelId);
+  
+  // Sync local state with context when context changes (e.g. initial load)
+  useEffect(() => {
+      setLocalApiKey(volcengineApiKey);
+      setLocalModelId(volcengineModelId);
+  }, [volcengineApiKey, volcengineModelId]);
+
+  const handleSaveSettings = () => {
+      setVolcengineApiKey(localApiKey);
+      setVolcengineModelId(localModelId);
+      setShowSettings(false);
+  };
+
+  const [testStatus, setTestStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [testMessage, setTestMessage] = useState('');
+
+  const handleTestConnection = async () => {
+      setTestStatus('loading');
+      setTestMessage('');
+      try {
+          const response = await fetch('/api/test-connection', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  apiKey: localApiKey,
+                  modelId: localModelId
+              })
+          });
+          const data = await response.json();
+          if (data.success) {
+              setTestStatus('success');
+              setTestMessage('连接成功！(Connected)');
+          } else {
+              setTestStatus('error');
+              setTestMessage(`连接失败: ${data.details}`);
+          }
+      } catch (e: any) {
+          setTestStatus('error');
+          setTestMessage(`请求错误: ${e.message}`);
+      }
+  };
+
   const [designImage, setDesignImage] = useState<string | null>(null);
   const [devImage, setDevImage] = useState<string | null>(null);
   const [designFileName, setDesignFileName] = useState<string>('');
@@ -216,8 +261,7 @@ const App: React.FC = () => {
       const localResult = await analyzeLocalDifferences(
         newComparisonResult, 
         designImage, 
-        newComparisonResult.alignedDevImageUrl,
-        devImage
+        newComparisonResult.alignedDevImageUrl
       );
       
       let finalResult = localResult;
@@ -232,7 +276,9 @@ const App: React.FC = () => {
                   localResult.issues,
                   designImage,
                   newComparisonResult.alignedDevImageUrl,
-                  currentLang 
+                  currentLang,
+                  volcengineApiKey,
+                  volcengineModelId
               );
               finalResult = { ...localResult, issues: enhancedIssues };
           } catch (error: any) {
@@ -351,7 +397,7 @@ const App: React.FC = () => {
 
           <div className="mt-auto mb-6 relative">
                {showSettings && (
-                 <div ref={settingsRef} className="absolute bottom-full left-14 mb-4 w-48 bg-bg-card/80 backdrop-blur-xl border border-border-light rounded-xl shadow-float p-3 z-50 flex flex-col gap-3 animate-fade-in">
+                 <div ref={settingsRef} className="absolute bottom-full left-14 mb-4 w-72 bg-bg-card/95 backdrop-blur-xl border border-border-light rounded-xl shadow-float p-4 z-50 flex flex-col gap-4 animate-fade-in">
                     <div className="flex flex-col gap-2">
                       <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider px-1">{t('app.language')}</span>
                       <div className="flex bg-bg-lighter/50 p-1 rounded-lg">
@@ -370,6 +416,50 @@ const App: React.FC = () => {
                           </button>
                        </div>
                     </div>
+                    
+                    <div className="h-px bg-border-light my-1"></div>
+
+                    <div className="flex flex-col gap-2">
+                       <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider px-1">Doubao API Key</span>
+                       <input 
+                           type="password" 
+                           value={localApiKey} 
+                           onChange={(e) => setLocalApiKey(e.target.value)}
+                           className="w-full bg-white dark:bg-black/40 border border-border-light rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:border-primary transition-colors font-mono"
+                           placeholder="Enter API Key"
+                       />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                       <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider px-1">Doubao Model ID</span>
+                       <input 
+                           type="text" 
+                           value={localModelId} 
+                           onChange={(e) => setLocalModelId(e.target.value)}
+                           className="w-full bg-white dark:bg-black/40 border border-border-light rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-gray-100 focus:outline-none focus:border-primary transition-colors font-mono"
+                           placeholder="ep-..."
+                       />
+                    </div>
+                    
+                    <div className="flex gap-2 mt-1">
+                        <button 
+                            onClick={handleTestConnection}
+                            disabled={testStatus === 'loading'}
+                            className={`flex-1 text-xs font-bold py-2 rounded-lg border border-border-light hover:bg-bg-lighter transition-colors ${testStatus === 'loading' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                            {testStatus === 'loading' ? 'Testing...' : (language === 'en' ? 'Test' : '测试连接')}
+                        </button>
+                        <button 
+                            onClick={handleSaveSettings}
+                            className="flex-[2] bg-primary text-white text-xs font-bold py-2 rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+                        >
+                            {language === 'en' ? 'Confirm & Save' : '确定并保存'}
+                        </button>
+                    </div>
+                    {testMessage && (
+                        <div className={`text-[10px] px-1 ${testStatus === 'success' ? 'text-green-500' : 'text-red-500'}`}>
+                            {testMessage}
+                        </div>
+                    )}
                  </div>
                )}
                <button ref={settingsButtonRef} onClick={() => setShowSettings(!showSettings)} className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${showSettings ? 'bg-bg-lighter text-text-main' : 'text-text-muted hover:text-text-main hover:bg-bg-lighter'}`}>
